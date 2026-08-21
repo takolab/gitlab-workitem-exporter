@@ -409,7 +409,7 @@ Integration tests set `GITLAB_BASE_URL` to a local WireMock server so the comple
 
 ## License
 
-This repository does not currently include a `LICENSE` file. A license has not yet been chosen; this should be resolved before the repository is made public.
+Licensed under the [MIT License](LICENSE).
 
 ## Current Scope
 
