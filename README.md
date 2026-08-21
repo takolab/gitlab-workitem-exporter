@@ -1,5 +1,7 @@
 # GitLab Work Item Exporter
 
+[![CI](https://github.com/takolab/gitlab-workitem-exporter/actions/workflows/ci.yml/badge.svg)](https://github.com/takolab/gitlab-workitem-exporter/actions/workflows/ci.yml)
+
 A small Rust CLI application that exports a GitLab Work Item and its comments to a single JSON file.
 
 This project was created as a hands-on Rust learning project, covering HTTP APIs, GraphQL, REST, JSON serialization/deserialization, CLI argument parsing, error handling, pagination, testing, and basic Rust project organization.
@@ -402,6 +404,10 @@ cargo test
 cargo clippy --all-targets --all-features -- -D warnings
 cargo build --release
 ```
+
+## Continuous Integration
+
+A [GitHub Actions workflow](.github/workflows/ci.yml) runs on every push and pull request to `main`, executing the same four checks listed above. It does not require `GITLAB_TOKEN` or any other secret, since all tests use mocked GitLab API responses.
 
 ## Testing With a Mock GitLab Server
 
