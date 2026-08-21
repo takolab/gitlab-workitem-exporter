@@ -668,10 +668,6 @@ async fn mount_comments_mock(server: &MockServer, iid: &str, comments: Vec<serde
 
 #[test]
 fn iid_and_iids_together_fails() {
-    // Mode resolution (where the mutually-exclusive check lives) only runs
-    // after the token check succeeds, so GITLAB_TOKEN must be set here or
-    // this test would instead observe the "GITLAB_TOKEN is not set" error
-    // in environments without a local `.env` (e.g. CI).
     let temp_dir = tempdir().expect("temporary directory should be created");
 
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
@@ -690,6 +686,47 @@ fn iid_and_iids_together_fails() {
     cmd.assert()
         .failure()
         .stderr(predicate::str::contains("mutually exclusive"));
+}
+
+#[test]
+fn iid_and_iids_together_fails_before_the_token_check() {
+    // Export mode is resolved before GITLAB_TOKEN is checked, so this CLI
+    // argument error is reported on its own rather than being masked by an
+    // unrelated missing-token error.
+    let temp_dir = tempdir().expect("temporary directory should be created");
+
+    let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
+
+    cmd.current_dir(temp_dir.path())
+        .env_remove("GITLAB_TOKEN")
+        .args([
+            "--project",
+            "example-group/example-project",
+            "--iid",
+            "30",
+            "--iids",
+            "23,24",
+        ]);
+
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("mutually exclusive"))
+        .stderr(predicate::str::contains("GITLAB_TOKEN").not());
+}
+
+#[test]
+fn zero_iid_fails_clearly() {
+    let temp_dir = tempdir().expect("temporary directory should be created");
+
+    let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
+
+    cmd.current_dir(temp_dir.path())
+        .env("GITLAB_TOKEN", "test-token")
+        .args(["--project", "example-group/example-project", "--iid", "0"]);
+
+    cmd.assert()
+        .failure()
+        .stderr(predicate::str::contains("Invalid Work Item IID '0'"));
 }
 
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]

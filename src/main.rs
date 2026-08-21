@@ -91,9 +91,12 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let args = Args::parse();
 
-    let config = Config::from_env()?;
-
+    // Resolved before the token check so CLI argument errors (e.g. --iid
+    // and --iids given together) are reported on their own, rather than
+    // being masked by an unrelated missing-token error.
     let mode = config::resolve_export_mode(args.iid, args.iids.as_deref())?;
+
+    let config = Config::from_env()?;
 
     let client = Client::new();
 

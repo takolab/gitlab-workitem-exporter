@@ -143,6 +143,9 @@ pub fn resolve_export_mode(
         (Some(_), Some(_)) => Err(ConfigError::new(
             "--iid and --iids are mutually exclusive; specify only one.",
         )),
+        (Some(0), None) => Err(ConfigError::new(
+            "Invalid Work Item IID '0' in --iid: must be a positive integer",
+        )),
         (Some(iid), None) => Ok(ExportMode::Single(iid)),
         (None, Some(raw)) => parse_iid_list(raw, "--iids").map(ExportMode::Multiple),
         (None, None) => {
@@ -330,6 +333,16 @@ mod tests {
         assert_eq!(
             error.to_string(),
             "--iid and --iids are mutually exclusive; specify only one."
+        );
+    }
+
+    #[test]
+    fn resolve_export_mode_rejects_zero_iid() {
+        let error = resolve_export_mode(Some(0), None).expect_err("zero IID should fail");
+
+        assert_eq!(
+            error.to_string(),
+            "Invalid Work Item IID '0' in --iid: must be a positive integer"
         );
     }
 
