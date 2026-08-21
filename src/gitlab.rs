@@ -50,6 +50,9 @@ pub async fn fetch_work_item(
                         title
                         description
                         state
+                        createdAt
+                        updatedAt
+                        webUrl
                     }
                 }
             }
@@ -142,6 +145,10 @@ mod tests {
             title: "Test Work Item".to_string(),
             description: Some("Test description".to_string()),
             state: "OPEN".to_string(),
+            created_at: "2026-08-01T10:00:00Z".to_string(),
+            updated_at: "2026-08-20T14:00:00Z".to_string(),
+            web_url: "https://gitlab.example.com/example-group/example-project/-/work_items/30"
+                .to_string(),
         }
     }
 

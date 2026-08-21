@@ -34,6 +34,12 @@ pub struct WorkItem {
     pub title: String,
     pub description: Option<String>,
     pub state: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+    #[serde(rename = "webUrl")]
+    pub web_url: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -61,6 +67,42 @@ pub struct ExportWorkItem {
     pub comments: Vec<Comment>,
 }
 
+/// The `source` block of a multi Work Item export: the GitLab project the
+/// Work Items came from and the request parameters used to build the file.
+#[derive(Debug, Serialize)]
+pub struct MultiExportSource {
+    pub gitlab_base_url: String,
+    pub project: String,
+    pub work_item_iids: Vec<u64>,
+    pub recent_comments_limit: usize,
+}
+
+/// A single Work Item within a multi Work Item export, including only its
+/// most recent non-system comments (see [`MultiExportSource::recent_comments_limit`]).
+#[derive(Debug, Serialize)]
+pub struct MultiExportWorkItem {
+    pub id: String,
+    pub iid: u64,
+    pub title: String,
+    pub description: Option<String>,
+    pub state: String,
+    pub created_at: String,
+    pub updated_at: String,
+    pub web_url: String,
+    pub total_comment_count: usize,
+    pub comments_truncated: bool,
+    pub recent_comments: Vec<Comment>,
+}
+
+/// The top-level JSON document produced by a multi Work Item export.
+#[derive(Debug, Serialize)]
+pub struct MultiExport {
+    pub schema_version: String,
+    pub generated_at: String,
+    pub source: MultiExportSource,
+    pub work_items: Vec<MultiExportWorkItem>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -79,7 +121,10 @@ mod tests {
                                 "iid": "30",
                                 "title": "Example Work Item Title",
                                 "description": "Test description",
-                                "state": "OPEN"
+                                "state": "OPEN",
+                                "createdAt": "2026-08-01T10:00:00Z",
+                                "updatedAt": "2026-08-20T14:00:00Z",
+                                "webUrl": "https://gitlab.example.com/example-group/example-project/-/work_items/30"
                             }
                         ]
                     }
@@ -106,6 +151,12 @@ mod tests {
         assert_eq!(work_item.title, "Example Work Item Title");
         assert_eq!(work_item.description.as_deref(), Some("Test description"));
         assert_eq!(work_item.state, "OPEN");
+        assert_eq!(work_item.created_at, "2026-08-01T10:00:00Z");
+        assert_eq!(work_item.updated_at, "2026-08-20T14:00:00Z");
+        assert_eq!(
+            work_item.web_url,
+            "https://gitlab.example.com/example-group/example-project/-/work_items/30"
+        );
     }
 
     #[test]
@@ -188,6 +239,85 @@ mod tests {
                         "username":
                             "example-user"
                     }
+                }
+            ]
+        });
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn serializes_multi_export() {
+        let export = MultiExport {
+            schema_version: "1.0".to_string(),
+            generated_at: "2026-08-21T09:00:00Z".to_string(),
+            source: MultiExportSource {
+                gitlab_base_url: "https://gitlab.example.com".to_string(),
+                project: "example-group/example-project".to_string(),
+                work_item_iids: vec![101, 102],
+                recent_comments_limit: 10,
+            },
+            work_items: vec![MultiExportWorkItem {
+                id: "gid://gitlab/WorkItem/123456789".to_string(),
+                iid: 101,
+                title: "Example Application".to_string(),
+                description: Some("Current goals, tasks, and notes...".to_string()),
+                state: "OPEN".to_string(),
+                created_at: "2026-08-01T10:00:00Z".to_string(),
+                updated_at: "2026-08-20T14:00:00Z".to_string(),
+                web_url:
+                    "https://gitlab.example.com/example-group/example-project/-/work_items/101"
+                        .to_string(),
+                total_comment_count: 14,
+                comments_truncated: true,
+                recent_comments: vec![Comment {
+                    id: 987654321,
+                    body: "Example progress update".to_string(),
+                    created_at: "2026-08-20T10:00:00Z".to_string(),
+                    system: false,
+                    author: Author {
+                        name: "Example User".to_string(),
+                        username: "example-user".to_string(),
+                    },
+                }],
+            }],
+        };
+
+        let actual = serde_json::to_value(&export).expect("MultiExport should serialize");
+
+        let expected = json!({
+            "schema_version": "1.0",
+            "generated_at": "2026-08-21T09:00:00Z",
+            "source": {
+                "gitlab_base_url": "https://gitlab.example.com",
+                "project": "example-group/example-project",
+                "work_item_iids": [101, 102],
+                "recent_comments_limit": 10
+            },
+            "work_items": [
+                {
+                    "id": "gid://gitlab/WorkItem/123456789",
+                    "iid": 101,
+                    "title": "Example Application",
+                    "description": "Current goals, tasks, and notes...",
+                    "state": "OPEN",
+                    "created_at": "2026-08-01T10:00:00Z",
+                    "updated_at": "2026-08-20T14:00:00Z",
+                    "web_url": "https://gitlab.example.com/example-group/example-project/-/work_items/101",
+                    "total_comment_count": 14,
+                    "comments_truncated": true,
+                    "recent_comments": [
+                        {
+                            "id": 987654321u64,
+                            "body": "Example progress update",
+                            "created_at": "2026-08-20T10:00:00Z",
+                            "system": false,
+                            "author": {
+                                "name": "Example User",
+                                "username": "example-user"
+                            }
+                        }
+                    ]
                 }
             ]
         });
