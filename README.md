@@ -11,7 +11,7 @@ This project was created as a hands-on Rust learning project, covering HTTP APIs
 ## Features
 
 * Fetches a single GitLab Work Item using the GitLab GraphQL API
-* Fetches comments associated with the Work Item using the GitLab REST Notes API
+* Fetches comments associated with the Work Item using the GitLab Issues REST Notes API (see [Supported Work Item types](#supported-work-item-types))
 * Fetches all comments across multiple REST API pages
 * Combines the Work Item and its comments into a single JSON file
 * Supports selecting a GitLab project and Work Item IID from CLI arguments
@@ -25,14 +25,14 @@ This project was created as a hands-on Rust learning project, covering HTTP APIs
 
 ```json
 {
-  "id": "gid://gitlab/WorkItem/197173799",
+  "id": "gid://gitlab/WorkItem/123456789",
   "iid": "30",
   "title": "Example Work Item Title",
   "description": "Work Item description...",
   "state": "OPEN",
   "comments": [
     {
-      "id": 3670758947,
+      "id": 987654321,
       "body": "Comment body...",
       "created_at": "2026-08-13T10:00:00.000Z",
       "system": false,
@@ -315,11 +315,13 @@ The Work Item itself is retrieved using:
 POST /api/graphql
 ```
 
-Comments are retrieved using the REST Notes API:
+Comments are retrieved using the Issues REST Notes API:
 
 ```text
 GET /api/v4/projects/:project/issues/:iid/notes
 ```
+
+Because comments are fetched through the *Issues* Notes API, this currently works reliably for issue-type Work Items. Other Work Item types (e.g. Epics, Tasks) may not expose their comments through this endpoint and are unverified; see [Current Scope](#current-scope).
 
 The comments API is requested with:
 
@@ -454,6 +456,10 @@ It does not currently:
 * Install the binary system-wide
 
 These can be added later if needed.
+
+### Supported Work Item types
+
+The Work Item itself is fetched through the generic GitLab GraphQL `workItems` query, but comments are fetched through the *Issues* REST Notes API (`/api/v4/projects/:project/issues/:iid/notes`). This means the exporter currently supports **issue-type GitLab Work Items whose comments are available through the Issues Notes API**. Other Work Item types (Epics, Tasks, and others) have not been verified and may not return comments correctly through this endpoint.
 
 ## Development Status
 

@@ -304,7 +304,7 @@ async fn exports_work_item_with_comments_to_json() {
                         "nodes": [
                             {
                                 "id":
-                                    "gid://gitlab/WorkItem/197173799",
+                                    "gid://gitlab/WorkItem/123456789",
                                 "iid": "30",
                                 "title":
                                     "Example Work Item Title",
@@ -332,7 +332,7 @@ async fn exports_work_item_with_comments_to_json() {
         .and(query_param("page", "1"))
         .respond_with(ResponseTemplate::new(200).set_body_json(json!([
             {
-                "id": 3670758947u64,
+                "id": 987654321u64,
                 "body": "First comment",
                 "created_at":
                     "2026-08-11T10:00:00.000Z",
@@ -344,7 +344,7 @@ async fn exports_work_item_with_comments_to_json() {
                 }
             },
             {
-                "id": 3670759000u64,
+                "id": 987654322u64,
                 "body": "Second comment",
                 "created_at":
                     "2026-08-11T11:00:00.000Z",
@@ -356,7 +356,7 @@ async fn exports_work_item_with_comments_to_json() {
                 }
             },
             {
-                "id": 3670759100u64,
+                "id": 987654323u64,
                 "body": "Third comment",
                 "created_at":
                     "2026-08-11T12:00:00.000Z",
@@ -399,14 +399,14 @@ async fn exports_work_item_with_comments_to_json() {
 
     let expected = json!({
         "id":
-            "gid://gitlab/WorkItem/197173799",
+            "gid://gitlab/WorkItem/123456789",
         "iid": "30",
         "title": "Example Work Item Title",
         "description": "Test description",
         "state": "OPEN",
         "comments": [
             {
-                "id": 3670758947u64,
+                "id": 987654321u64,
                 "body": "First comment",
                 "created_at":
                     "2026-08-11T10:00:00.000Z",
@@ -418,7 +418,7 @@ async fn exports_work_item_with_comments_to_json() {
                 }
             },
             {
-                "id": 3670759000u64,
+                "id": 987654322u64,
                 "body": "Second comment",
                 "created_at":
                     "2026-08-11T11:00:00.000Z",
@@ -430,7 +430,7 @@ async fn exports_work_item_with_comments_to_json() {
                 }
             },
             {
-                "id": 3670759100u64,
+                "id": 987654323u64,
                 "body": "Third comment",
                 "created_at":
                     "2026-08-11T12:00:00.000Z",
@@ -462,7 +462,7 @@ async fn exports_all_comments_across_multiple_pages() {
                         "nodes": [
                             {
                                 "id":
-                                    "gid://gitlab/WorkItem/197173799",
+                                    "gid://gitlab/WorkItem/123456789",
                                 "iid": "30",
                                 "title": "Pagination Test",
                                 "description":

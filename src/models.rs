@@ -75,7 +75,7 @@ mod tests {
                     "workItems": {
                         "nodes": [
                             {
-                                "id": "gid://gitlab/WorkItem/197173799",
+                                "id": "gid://gitlab/WorkItem/123456789",
                                 "iid": "30",
                                 "title": "Example Work Item Title",
                                 "description": "Test description",
@@ -101,7 +101,7 @@ mod tests {
 
         let work_item = &project.work_items.nodes[0];
 
-        assert_eq!(work_item.id, "gid://gitlab/WorkItem/197173799");
+        assert_eq!(work_item.id, "gid://gitlab/WorkItem/123456789");
         assert_eq!(work_item.iid, "30");
         assert_eq!(work_item.title, "Example Work Item Title");
         assert_eq!(work_item.description.as_deref(), Some("Test description"));
@@ -113,7 +113,7 @@ mod tests {
         let input = r#"
         [
             {
-                "id": 3670758947,
+                "id": 987654321,
                 "body": "First comment",
                 "created_at": "2026-08-11T10:00:00.000Z",
                 "system": false,
@@ -123,7 +123,7 @@ mod tests {
                 }
             },
             {
-                "id": 3670759000,
+                "id": 987654322,
                 "body": "Second comment",
                 "created_at": "2026-08-11T11:00:00.000Z",
                 "system": false,
@@ -140,7 +140,7 @@ mod tests {
 
         assert_eq!(comments.len(), 2);
 
-        assert_eq!(comments[0].id, 3670758947);
+        assert_eq!(comments[0].id, 987654321);
         assert_eq!(comments[0].body, "First comment");
         assert!(!comments[0].system);
         assert_eq!(comments[0].author.username, "example-user");
@@ -151,13 +151,13 @@ mod tests {
     #[test]
     fn serializes_export_work_item() {
         let work_item = ExportWorkItem {
-            id: "gid://gitlab/WorkItem/197173799".to_string(),
+            id: "gid://gitlab/WorkItem/123456789".to_string(),
             iid: "30".to_string(),
             title: "Example Work Item Title".to_string(),
             description: Some("Test description".to_string()),
             state: "OPEN".to_string(),
             comments: vec![Comment {
-                id: 3670758947,
+                id: 987654321,
                 body: "First comment".to_string(),
                 created_at: "2026-08-11T10:00:00.000Z".to_string(),
                 system: false,
@@ -171,14 +171,14 @@ mod tests {
         let actual = serde_json::to_value(&work_item).expect("ExportWorkItem should serialize");
 
         let expected = json!({
-            "id": "gid://gitlab/WorkItem/197173799",
+            "id": "gid://gitlab/WorkItem/123456789",
             "iid": "30",
             "title": "Example Work Item Title",
             "description": "Test description",
             "state": "OPEN",
             "comments": [
                 {
-                    "id": 3670758947u64,
+                    "id": 987654321u64,
                     "body": "First comment",
                     "created_at":
                         "2026-08-11T10:00:00.000Z",

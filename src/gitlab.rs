@@ -137,7 +137,7 @@ mod tests {
 
     fn sample_work_item() -> WorkItem {
         WorkItem {
-            id: "gid://gitlab/WorkItem/197173799".to_string(),
+            id: "gid://gitlab/WorkItem/123456789".to_string(),
             iid: "30".to_string(),
             title: "Test Work Item".to_string(),
             description: Some("Test description".to_string()),
