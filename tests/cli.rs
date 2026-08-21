@@ -668,16 +668,24 @@ async fn mount_comments_mock(server: &MockServer, iid: &str, comments: Vec<serde
 
 #[test]
 fn iid_and_iids_together_fails() {
+    // Mode resolution (where the mutually-exclusive check lives) only runs
+    // after the token check succeeds, so GITLAB_TOKEN must be set here or
+    // this test would instead observe the "GITLAB_TOKEN is not set" error
+    // in environments without a local `.env` (e.g. CI).
+    let temp_dir = tempdir().expect("temporary directory should be created");
+
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
 
-    cmd.args([
-        "--project",
-        "example-group/example-project",
-        "--iid",
-        "30",
-        "--iids",
-        "23,24",
-    ]);
+    cmd.current_dir(temp_dir.path())
+        .env("GITLAB_TOKEN", "test-token")
+        .args([
+            "--project",
+            "example-group/example-project",
+            "--iid",
+            "30",
+            "--iids",
+            "23,24",
+        ]);
 
     cmd.assert()
         .failure()
