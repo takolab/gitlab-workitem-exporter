@@ -23,7 +23,9 @@ use models::ExportWorkItem;
 )]
 struct Args {
     /// GitLab project path, e.g. your-group/your-project
-    #[arg(long)]
+    /// Falls back to GITLAB_PROJECT from the environment or `.env` file
+    /// when omitted; an explicit --project always takes priority.
+    #[arg(long, env = "GITLAB_PROJECT")]
     project: String,
 
     /// GitLab Work Item IID

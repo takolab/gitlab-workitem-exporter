@@ -34,13 +34,145 @@ fn missing_iid_fails() {
 
 #[test]
 fn missing_project_fails() {
+    // Run from an isolated temp directory with GITLAB_PROJECT unset so this
+    // test does not depend on (or read) the developer's local `.env`,
+    // which may set a default GITLAB_PROJECT.
+    let temp_dir = tempdir().expect("temporary directory should be created");
+
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
 
-    cmd.args(["--iid", "30"]);
+    cmd.current_dir(temp_dir.path())
+        .env_remove("GITLAB_PROJECT")
+        .args(["--iid", "30"]);
 
     cmd.assert()
         .failure()
         .stderr(predicate::str::contains("--project"));
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn uses_gitlab_project_env_var_when_flag_is_omitted() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/graphql"))
+        .and(bearer_token("test-token"))
+        .and(body_partial_json(json!({
+            "variables": {
+                "project": "example-group/example-project",
+                "iid": "30"
+            }
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": {
+                "project": {
+                    "workItems": {
+                        "nodes": [
+                            {
+                                "id": "gid://gitlab/WorkItem/1",
+                                "iid": "30",
+                                "title": "Example Work Item Title",
+                                "description": "Test description",
+                                "state": "OPEN"
+                            }
+                        ]
+                    }
+                }
+            }
+        })))
+        .mount(&server)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path_regex(r"^/api/v4/projects/.+/issues/30/notes$"))
+        .and(bearer_token("test-token"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+
+    let temp_dir = tempdir().expect("temporary directory should be created");
+    let output_path = temp_dir.path().join("workitem-30.json");
+
+    let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
+
+    cmd.env("GITLAB_TOKEN", "test-token")
+        .env("GITLAB_BASE_URL", server.uri())
+        .env("GITLAB_PROJECT", "example-group/example-project")
+        .args(["--iid", "30", "--output"])
+        .arg(&output_path);
+
+    cmd.assert().success();
+
+    let output = fs::read_to_string(&output_path).expect("output JSON should exist");
+
+    let actual: serde_json::Value =
+        serde_json::from_str(&output).expect("output should be valid JSON");
+
+    assert_eq!(actual["iid"], "30");
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+async fn explicit_project_flag_overrides_gitlab_project_env_var() {
+    let server = MockServer::start().await;
+
+    Mock::given(method("POST"))
+        .and(path("/api/graphql"))
+        .and(bearer_token("test-token"))
+        .and(body_partial_json(json!({
+            "variables": {
+                "project": "cli-group/cli-project",
+                "iid": "30"
+            }
+        })))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!({
+            "data": {
+                "project": {
+                    "workItems": {
+                        "nodes": [
+                            {
+                                "id": "gid://gitlab/WorkItem/1",
+                                "iid": "30",
+                                "title": "Example Work Item Title",
+                                "description": "Test description",
+                                "state": "OPEN"
+                            }
+                        ]
+                    }
+                }
+            }
+        })))
+        .expect(1)
+        .named("GraphQL Work Item request")
+        .mount(&server)
+        .await;
+
+    Mock::given(method("GET"))
+        .and(path_regex(r"^/api/v4/projects/.+/issues/30/notes$"))
+        .and(bearer_token("test-token"))
+        .respond_with(ResponseTemplate::new(200).set_body_json(json!([])))
+        .mount(&server)
+        .await;
+
+    let temp_dir = tempdir().expect("temporary directory should be created");
+    let output_path = temp_dir.path().join("workitem-30.json");
+
+    let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
+
+    cmd.env("GITLAB_TOKEN", "test-token")
+        .env("GITLAB_BASE_URL", server.uri())
+        .env("GITLAB_PROJECT", "env-group/env-project")
+        .args([
+            "--project",
+            "cli-group/cli-project",
+            "--iid",
+            "30",
+            "--output",
+        ])
+        .arg(&output_path);
+
+    // The mocked GraphQL request only matches "cli-group/cli-project", so
+    // success here proves the CLI flag won over the environment variable.
+    cmd.assert().success();
 }
 
 #[test]

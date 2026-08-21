@@ -78,10 +78,11 @@ Copy the example file and fill in your token:
 cp .env.example .env
 ```
 
-Edit `.env` and set `GITLAB_TOKEN`:
+Edit `.env` and set `GITLAB_TOKEN` (and optionally `GITLAB_PROJECT`, see [Setting a default project](#setting-a-default-project)):
 
 ```dotenv
 GITLAB_TOKEN=your-token
+GITLAB_PROJECT=your-group/your-project
 ```
 
 `.env` is listed in `.gitignore` and is never committed. The application loads it automatically on startup if present. A value already set in your shell environment always takes priority over `.env`.
@@ -140,15 +141,31 @@ Export a Work Item:
   --iid 30
 ```
 
-The required arguments are:
+The arguments are:
 
 ```text
 --project <PROJECT>
-    GitLab project path
+    GitLab project path.
+    Falls back to GITLAB_PROJECT from the environment or `.env` file
+    when omitted. An explicit --project always overrides it.
 
 --iid <IID>
-    GitLab Work Item IID
+    GitLab Work Item IID (required)
 ```
+
+### Setting a default project
+
+If you mostly work with a single GitLab project, set `GITLAB_PROJECT` in `.env` so you can omit `--project`:
+
+```dotenv
+GITLAB_PROJECT=your-group/your-project
+```
+
+```bash
+./target/release/gitlab-workitem-exporter --iid 30
+```
+
+An explicit `--project` on the command line always takes priority over `GITLAB_PROJECT`.
 
 ### Custom output path
 
@@ -340,8 +357,12 @@ Integration tests cover:
 
 * `--help`
 * Missing `--iid`
-* Missing `--project`
+* Missing `--project` (and no `GITLAB_PROJECT` fallback)
 * Unknown CLI arguments
+* Missing or empty `GITLAB_TOKEN`
+* Invalid output path (file write failure)
+* `GITLAB_PROJECT` used as a fallback when `--project` is omitted
+* Explicit `--project` overriding `GITLAB_PROJECT`
 * Full Work Item + comments export using mocked GitLab APIs
 * Comment pagination across multiple REST API pages
 
