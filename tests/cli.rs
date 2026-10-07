@@ -754,8 +754,11 @@ async fn exports_multiple_work_items_to_one_json_file() {
 
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
 
-    cmd.env("GITLAB_TOKEN", "test-token")
+    // Isolated from any developer `.env` so the default comment limit applies.
+    cmd.current_dir(temp_dir.path())
+        .env("GITLAB_TOKEN", "test-token")
         .env("GITLAB_BASE_URL", server.uri())
+        .env_remove("GITLAB_RECENT_COMMENTS_LIMIT")
         .args([
             "--project",
             "example-group/example-project",
@@ -890,8 +893,11 @@ async fn multi_export_reports_which_iid_failed_and_writes_no_file() {
 
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
 
-    cmd.env("GITLAB_TOKEN", "test-token")
+    // Isolated from any developer `.env` so the default comment limit applies.
+    cmd.current_dir(temp_dir.path())
+        .env("GITLAB_TOKEN", "test-token")
         .env("GITLAB_BASE_URL", server.uri())
+        .env_remove("GITLAB_RECENT_COMMENTS_LIMIT")
         .args([
             "--project",
             "example-group/example-project",
@@ -1038,8 +1044,11 @@ async fn multi_export_parses_whitespace_and_deduplicates_iids() {
 
     let mut cmd = Command::cargo_bin(BIN_NAME).expect("binary should exist");
 
-    cmd.env("GITLAB_TOKEN", "test-token")
+    // Isolated from any developer `.env` so the default comment limit applies.
+    cmd.current_dir(temp_dir.path())
+        .env("GITLAB_TOKEN", "test-token")
         .env("GITLAB_BASE_URL", server.uri())
+        .env_remove("GITLAB_RECENT_COMMENTS_LIMIT")
         .args([
             "--project",
             "example-group/example-project",
